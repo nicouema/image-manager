@@ -10,6 +10,8 @@ import com.nicou.imagemanager.domain.repository.ImageRepository;
 import com.nicou.imagemanager.domain.usecase.ImageCaptionService;
 import com.nicou.imagemanager.domain.usecase.ImageDbService;
 import com.nicou.imagemanager.domain.usecase.S3Service;
+import com.nicou.imagemanager.ports.input.rs.mapper.ImageMapper;
+import com.nicou.imagemanager.ports.input.rs.response.ImageResponse;
 import com.nicou.imagemanager.ports.output.imagecaption.ImageCaptionIntegration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,17 +40,18 @@ public class ImageStorageServiceImpl implements S3Service, ImageCaptionService, 
     private final S3Config config;
     private final ImageCaptionIntegration imageCaptionIntegration;
     private final ImageRepository repository;
+    private final ImageMapper mapper;
 
     @Override
     @Async
-    public CompletableFuture<String> uploadImage(MultipartFile image) {
+    public CompletableFuture<ImageResponse> uploadImage(MultipartFile image) {
         String fileUrl;
         try {
             File file = convertMultipartToFile(image);
             String fileName = generateFileName(file);
             String hash = getHashFromImage(image);
             if (repository.findById(hash).isPresent()) {
-                return CompletableFuture.completedFuture(repository.findById(hash).get().getUri());
+                return CompletableFuture.completedFuture(mapper.imageToImageResponse(repository.findById(hash).get()));
             }
             fileUrl = amazonS3.getUrl(config.getS3Bucket(), fileName).toString();
             uploadFileToS3Bucket(fileName, file);
@@ -58,7 +61,10 @@ public class ImageStorageServiceImpl implements S3Service, ImageCaptionService, 
             log.error("error uploading file", e);
             throw new UploadingFileException(e.getMessage());
         }
-        return CompletableFuture.completedFuture(fileUrl);
+        return CompletableFuture.completedFuture(ImageResponse.builder()
+                .uri(fileUrl)
+                .fileName(image.getName())
+                .build());
     }
 
     @Async

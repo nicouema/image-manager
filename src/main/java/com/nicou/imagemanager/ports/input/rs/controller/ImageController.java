@@ -2,6 +2,7 @@ package com.nicou.imagemanager.ports.input.rs.controller;
 
 import com.nicou.imagemanager.domain.usecase.S3Service;
 import com.nicou.imagemanager.ports.input.rs.api.ImageApi;
+import com.nicou.imagemanager.ports.input.rs.response.ImageResponse;
 import com.nicou.imagemanager.ports.input.rs.response.ImagesCreatedResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,8 +38,8 @@ public class ImageController implements ImageApi {
         ImagesCreatedResponse response = ImagesCreatedResponse.builder().build();
 
         for (MultipartFile image:images) {
-            CompletableFuture<String> uri = s3Service.uploadImage(image);
-            response.addLocation(uri.get());
+            CompletableFuture<ImageResponse> imageResponse = s3Service.uploadImage(image);
+            response.addLocation(imageResponse.get());
         }
 
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
