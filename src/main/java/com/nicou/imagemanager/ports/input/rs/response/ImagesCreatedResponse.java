@@ -16,13 +16,13 @@ import java.util.List;
 @Builder
 public class ImagesCreatedResponse {
 
-    private List<String> locations;
+    private List<ImageResponse> images;
 
-    public void addLocation(String aLocation) {
-        if (locations == null){
-            locations = new ArrayList<>();
+    public void addLocation(ImageResponse anImage) {
+        if (images == null){
+            images = new ArrayList<>();
         }
-        locations.add(aLocation);
+        images.add(anImage);
     }
 
 }
